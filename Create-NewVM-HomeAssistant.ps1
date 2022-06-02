@@ -1,8 +1,8 @@
-﻿cls
+﻿Clear-Host
 
 $VerbosePreference = "continue"
 
-$randomStr = -join ((48..57) + (97..122) | Get-Random -Count 8 | % {[char]$_})
+$randomStr = -join ((48..57) + (97..122) | Get-Random -Count 8 | ForEach-Object {[char]$_})
 $hostname = "vm-homeassistant-" + $randomStr
 $generation = 2
 $memory = 4096MB
@@ -17,7 +17,7 @@ New-VM -Name $hostname -Generation $generation -MemoryStartupBytes $memory -Path
 
 do {
 $vmIsCreated = Get-VM $hostname
-sleep 1
+Start-Sleep 1
 } until ($vmIsCreated)
 
 Write-Verbose "New VM is created"
