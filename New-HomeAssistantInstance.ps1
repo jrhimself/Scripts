@@ -11,7 +11,8 @@
     DateCreated: 2022-Jun-02
  
 .EXAMPLE
-    New-HomeAssistantInstance -Path "C:\Hyper-V\" -Memory 4096MB -Switchname "Bridged Network"
+    .\New-HomeAssistantInstance.ps1
+    .\New-HomeAssistantInstance.ps1 -Path "C:\Hyper-V\" -Memory 4096MB -Switchname "Bridged Network"
  
 .LINK
     https://github.com/jrhimself
