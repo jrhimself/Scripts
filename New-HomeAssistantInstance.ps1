@@ -2,7 +2,7 @@
 .SYNOPSIS
     This script creates a new VM in Hyper-V for Home Assistant. 
     It will download the latest version from Github and mount the hard disk file (.vhdx) to the VM. 
-    Use the parameters in the example to specify location and memory size of the VM.
+    Use the parameters in the example to specify location, memory size and network of the VM.
  
 .NOTES
     Name: New-HomeAssistantInstance
@@ -11,7 +11,7 @@
     DateCreated: 2022-Jun-02
  
 .EXAMPLE
-    New-HomeAssistantInstance -Path "C:\Hyper-V\" -Memory 4096MB
+    New-HomeAssistantInstance -Path "C:\Hyper-V\" -Memory 4096MB -Switchname "Bridged Network"
  
 .LINK
     https://github.com/jrhimself
@@ -30,7 +30,11 @@ param(
     [Parameter(
         Mandatory = $false
         )]
-    [string] $Memory = 4096MB
+    [string] $Memory = 4096MB,
+    [Parameter(
+        Mandatory = $false
+        )]
+    [string] $Switchname = "Bridged Network"
 )
 
 Clear-Host
@@ -40,8 +44,6 @@ $VerbosePreference = "continue"
 $randomStr = -join ((48..57) + (97..122) | Get-Random -Count 8 | ForEach-Object {[char]$_})
 $hostname = "vm-homeassistant-" + $randomStr
 $generation = 2
-#$memory = 4096MB
-$switchName = "Bridged Network"
 $fullFolderPath = $Path + $hostname
 
 # Create new VM
@@ -70,7 +72,7 @@ New-Item -Name $vhdxFolderName -ItemType Directory -Path $fullFolderPath | Out-N
 Write-Verbose "Created folder Virtual Hard Disks"
 
 # Download vhdx file 
-$tempFile = "c:\temp\" + $randomStr + ".zip"
+$tempFile = $fullFolderPath + "\" + $vhdxFolderName + "\" + $randomStr + ".zip"
 $repo = "home-assistant/operating-system"
 $releases = "https://api.github.com/repos/$repo/releases"
 
@@ -79,10 +81,6 @@ $tag = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
 Write-Verbose "Latest release = $tag"
 
 $url = "https://github.com/home-assistant/operating-system/releases/download/$tag/haos_ova-$tag.vhdx.zip"
-
-if (-not(Test-Path "c:\temp\")){
-    New-Item -Name "Temp" -ItemType Directory -Path "C:\" -Confirm:$false -Force | Out-Null
-}
 
 try{
     Invoke-WebRequest -Uri $url -OutFile $tempFile
@@ -96,7 +94,7 @@ $unzipDestination = $fullFolderPath + "\" + $vhdxFolderName
 Expand-Archive -LiteralPath $tempFile -DestinationPath $unzipDestination
 
 # Connect virtual hard drive to VM
-$vhdxFile = (Get-ChildItem $unzipDestination -File).FullName
+$vhdxFile = (Get-ChildItem $unzipDestination -File | Where-Object {$_.Name -like '*.vhdx'}).FullName
 $vmIsCreated | Add-VMHardDiskDrive -Path $vhdxFile
 Write-Verbose "Mounted VHDX file"
 
