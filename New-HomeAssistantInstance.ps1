@@ -89,7 +89,7 @@ catch{
     Write-warning "Download failed!"
 }
 
-# Unzip vhdx file to VM folder
+# Unzip vhdx file
 $unzipDestination = $fullFolderPath + "\" + $vhdxFolderName
 Expand-Archive -LiteralPath $tempFile -DestinationPath $unzipDestination
 
