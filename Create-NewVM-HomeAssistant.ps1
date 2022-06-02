@@ -9,9 +9,8 @@ $memory = 4096MB
 $switchName = "Bridged Network"
 $installPath = "C:\Hyper-V\"
 $fullFolderPath = $installPath + $hostname
-$url = "https://github.com/home-assistant/operating-system/releases/download/8.1/haos_ova-8.1.vhdx.zip"
 
-#Create new VM
+# Create new VM
 Write-Verbose "Creating new VM"
 New-VM -Name $hostname -Generation $generation -MemoryStartupBytes $memory -Path $installPath | Out-Null
 
@@ -23,21 +22,27 @@ Start-Sleep 1
 Write-Verbose "New VM is created"
 Write-Verbose "Hostname is $hostname"
 
-#Disable dynamic memory
+# Disable dynamic memory
 $vmIsCreated | Set-VMMemory -DynamicMemoryEnabled $false 
 Write-Verbose "Dynamic memory disabled"
 
-#Disable secure boot
+# Disable secure boot
 $vmIsCreated | Set-VMFirmware -EnableSecureBoot Off
 Write-Verbose "Secure boot disabled"
 
-# create vhdx folder
+# Create vhdx folder
 $vhdxFolderName = "Virtual Hard Disks" 
 New-Item -Name $vhdxFolderName -ItemType Directory -Path $fullFolderPath | Out-Null
 Write-Verbose "Created folder Virtual Hard Disks"
 
-# download vhdx file 
+# Download vhdx file 
 $tempFile = "c:\temp\" + $randomStr + ".zip"
+$repo = "home-assistant/operating-system"
+$releases = "https://api.github.com/repos/$repo/releases"
+
+Write-Verbose "Determining latest release"
+$tag = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
+$url = "https://github.com/home-assistant/operating-system/releases/download/$tag/haos_ova-$tag.vhdx.zip"
 
 if (-not(Test-Path "c:\temp\")){New-Item -Name "Temp" -ItemType Directory -Path "C:\" | Out-Null}
 
@@ -49,11 +54,11 @@ catch{
     pause
 }
 
-# unzip vhdx file to VM folder
+# Unzip vhdx file to VM folder
 $unzipDestination = $fullFolderPath + "\" + $vhdxFolderName
 Expand-Archive -LiteralPath $tempFile -DestinationPath $unzipDestination
 
-#Connect virtual hard drive to VM
+# Connect virtual hard drive to VM
 $vhdxFile = (Get-ChildItem $unzipDestination -File).FullName
 $vmIsCreated | Add-VMHardDiskDrive -Path $vhdxFile
 Write-Verbose "Mounted VHDX file"
@@ -67,10 +72,10 @@ $vmIsCreated | Get-VMNetworkAdapter | Connect-VMNetworkAdapter -SwitchName $swit
 Write-Verbose "Connected network adapter to $switchName"
 
 # Enable auto start and disable auto checkpoints
-$vmIsCreated | Set-VM –AutomaticStartAction Start -AutomaticCheckpointsEnabled $false
+$vmIsCreated | Set-VM -AutomaticStartAction Start -AutomaticCheckpointsEnabled $false
 Write-Verbose "Enabled automatic start"
 Write-Verbose "Disabled automatic checkpoints"
 
-#clean up temp files
+# Clean up temp files
 Remove-Item $tempFile -Force
 Write-Verbose "Cleaned up temp files"
