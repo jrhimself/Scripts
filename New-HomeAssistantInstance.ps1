@@ -89,7 +89,6 @@ try{
 }
 catch{
     Write-warning "Download failed!"
-    pause
 }
 
 # Unzip vhdx file to VM folder
