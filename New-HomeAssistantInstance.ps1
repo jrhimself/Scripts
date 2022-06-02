@@ -1,18 +1,52 @@
-﻿Clear-Host
+﻿<#
+.SYNOPSIS
+    This script creates a new VM in Hyper-V for Home Assistant. 
+    It will download the latest version from Github and mount the hard disk file (.vhdx) to the VM. 
+    Use the parameters in the example to specify location and memory size of the VM.
+ 
+.NOTES
+    Name: New-HomeAssistantInstance
+    Author: jr_himself
+    Version: 1.0
+    DateCreated: 2022-Jun-02
+ 
+.EXAMPLE
+    New-HomeAssistantInstance -Path "C:\Hyper-V\" -Memory 4096MB
+ 
+.LINK
+    https://github.com/jrhimself
+
+#>
+ 
+[CmdletBinding()]
+param(
+    [Parameter(
+        Mandatory = $false,
+        ValueFromPipeline = $true,
+        ValueFromPipelineByPropertyName = $true,
+        Position = 0
+        )]
+    [string] $Path = "C:\Hyper-V\",
+    [Parameter(
+        Mandatory = $false
+        )]
+    [string] $Memory = 4096MB
+)
+
+Clear-Host
 
 $VerbosePreference = "continue"
 
 $randomStr = -join ((48..57) + (97..122) | Get-Random -Count 8 | ForEach-Object {[char]$_})
 $hostname = "vm-homeassistant-" + $randomStr
 $generation = 2
-$memory = 4096MB
+#$memory = 4096MB
 $switchName = "Bridged Network"
-$installPath = "C:\Hyper-V\"
-$fullFolderPath = $installPath + $hostname
+$fullFolderPath = $Path + $hostname
 
 # Create new VM
 Write-Verbose "Creating new VM"
-New-VM -Name $hostname -Generation $generation -MemoryStartupBytes $memory -Path $installPath | Out-Null
+New-VM -Name $hostname -Generation $generation -MemoryStartupBytes $memory -Path $path | Out-Null
 
 do {
 $vmIsCreated = Get-VM $hostname
@@ -42,9 +76,13 @@ $releases = "https://api.github.com/repos/$repo/releases"
 
 Write-Verbose "Determining latest release"
 $tag = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
+Write-Verbose "Latest release = $tag"
+
 $url = "https://github.com/home-assistant/operating-system/releases/download/$tag/haos_ova-$tag.vhdx.zip"
 
-if (-not(Test-Path "c:\temp\")){New-Item -Name "Temp" -ItemType Directory -Path "C:\" | Out-Null}
+if (-not(Test-Path "c:\temp\")){
+    New-Item -Name "Temp" -ItemType Directory -Path "C:\" -Confirm:$false -Force | Out-Null
+}
 
 try{
     Invoke-WebRequest -Uri $url -OutFile $tempFile
@@ -67,9 +105,11 @@ Write-Verbose "Mounted VHDX file"
 $vmIsCreated | Set-VMFirmware -FirstBootDevice (Get-VMHardDiskDrive -VMName $hostname)
 Write-Verbose "First boot device set to hard disk drive"
 
-# Connect to bridged network
-$vmIsCreated | Get-VMNetworkAdapter | Connect-VMNetworkAdapter -SwitchName $switchName
-Write-Verbose "Connected network adapter to $switchName"
+# Connect to network
+if ($switchName){
+    $vmIsCreated | Get-VMNetworkAdapter | Connect-VMNetworkAdapter -SwitchName $switchName
+    Write-Verbose "Connected network adapter to $switchName"
+}
 
 # Enable auto start and disable auto checkpoints
 $vmIsCreated | Set-VM -AutomaticStartAction Start -AutomaticCheckpointsEnabled $false
