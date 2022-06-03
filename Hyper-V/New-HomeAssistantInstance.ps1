@@ -6,7 +6,7 @@
  
 .NOTES
     Name: New-HomeAssistantInstance
-    Author: jr_himself
+    Author: jrhimself
     Version: 1.0
     DateCreated: 2022-Jun-02
  
