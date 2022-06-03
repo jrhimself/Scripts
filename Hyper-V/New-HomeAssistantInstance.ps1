@@ -2,10 +2,11 @@
 .SYNOPSIS
     This script creates a new VM in Hyper-V for Home Assistant. 
     It will download the latest version from Github and mount the hard disk file (.vhdx) to the VM. 
-    Use the parameters in the example to specify location, hostname, memory size and network of the VM.
 
     By default, the script will generate a hostname and creates a VM with 4GB memory in folder C:\Hyper-V\. 
     The first external network will be selected if no network is specified.
+
+    Use the parameters in the example to specify hostname, memory size, location and network of the VM.
  
 .NOTES
     Name: New-HomeAssistantInstance
