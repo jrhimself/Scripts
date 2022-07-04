@@ -1,8 +1,8 @@
-﻿cls
+﻿Clear-Host
 
 $VerbosePreference = "continue"
 
-$randomStr = -join ((48..57) + (97..122) | Get-Random -Count 8 | % {[char]$_})
+$randomStr = -join ((48..57) + (97..122) | Get-Random -Count 8 | ForEach-Object {[char]$_})
 $hostname = "vm-homebridge-" + $randomStr
 $generation = 1
 $diskname = "disk-homebridge-" + $randomStr + ".vhdx"
@@ -24,7 +24,7 @@ Write-Verbose "Created folder Virtual Hard Disks"
 
 do {
 $vmIsCreated = Get-VM $hostname
-sleep 1
+Start-Sleep 1
 } until ($vmIsCreated)
 
 Write-Verbose "New VM is created"
