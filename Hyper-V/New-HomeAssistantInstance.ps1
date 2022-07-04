@@ -42,16 +42,20 @@ param(
     [Parameter(
         Mandatory = $false
         )]
-    [string] $switchname = (Get-VMSwitch -SwitchType External)[0].Name
+    [string] $switchname
 )
 
 Clear-Host
 
 $VerbosePreference = "continue"
 
-# Generate random string and default hostname
+# Generate random string, default hostname and switchname
 $randomStr = -join ((48..57) + (97..122) | Get-Random -Count 8 | ForEach-Object {[char]$_})
 if (!$hostname){$hostname = "vm-homeassistant-" + $randomStr}
+if (!$switchname){
+   try {$switchname = (Get-VMSwitch -SwitchType External)[0].Name}
+   catch {}
+}
 
 # Fix missing character
 if ($path.Substring($path.Length - 1) -ne "\"){
